@@ -1,0 +1,27 @@
+__pycache__/
+*.pyc
+*.log
+.env
+
+# keep the placeholder marker file and the fetcher script, ignore everything
+# real (actual photos) that lands here
+data/*
+!data/PLACE_DATA_HERE.md
+!data/image_fetcher.py
+!data/indoor_images/
+data/indoor_images/*
+!data/indoor_images/.gitkeep
+vggt/*
+!vggt/PLACE_MODEL_HERE.md
+Grounded-Segment-Anything/*
+!Grounded-Segment-Anything/PLACE_MODEL_HERE.md
+Hunyuan3D-2/*
+!Hunyuan3D-2/PLACE_MODEL_HERE.md
+
+outputs/*
+!outputs/.gitkeep
+
+# evaluation/ writes its results next to its scripts
+evaluation/results_*.json
+evaluation/results_*.csv
+evaluation/figures/

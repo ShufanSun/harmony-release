@@ -1,0 +1,55 @@
+# Pip packages for the `scenegen` env — the one that runs main.py and every
+# stage module.
+#
+#     conda create -n scenegen python=3.10
+#     conda activate scenegen
+#     pip install -r requirements.txt
+#
+# Versions are the ones this release was developed and tested against. They are
+# pinned with `>=` so a newer patch release is fine; loosen or tighten to taste.
+#
+# NOT covered here:
+#   - torch/torchvision CUDA builds — install the wheel matching your driver
+#     from https://pytorch.org before the rest of this file.
+#   - the `vllm-env`, `eagle-embodied`, `lang-sam` and `hunyuan3d` envs, which
+#     have their own dependency sets. `vllm-env` — which runs everything in
+#     Qwen/ (fastapi, uvicorn, pydantic, diffusers, certifi) — has an exported
+#     spec at environment_yml/vllm-env.yml; the other three do not. See
+#     MODELS_AND_PATHS.md.
+#   - the vendored clones' own requirements: vggt/requirements.txt and
+#     Grounded-Segment-Anything's setup.
+#   - Blender, which is an external binary (`BLENDER_BIN`).
+
+# ── Core numerics & imaging ──────────────────────────────────────────────────
+numpy>=2.2.6
+scipy>=1.14.1
+Pillow>=12.1.1
+opencv-python>=4.13.0
+matplotlib>=3.10.8
+
+# ── Geometry, meshes, rendering ──────────────────────────────────────────────
+trimesh>=4.11.4
+pygltflib>=1.16.5
+pyrender>=0.1.45
+open3d>=0.18.0
+
+# ── Torch stack (install the CUDA build first; see note above) ───────────────
+# torchvision and transformers are not imported by the pipeline directly, but
+# both are hard import-time dependencies of the vendored clones: `import
+# segment_anything` pulls torchvision, and GroundingDINO pulls transformers.
+torch>=2.3.1
+torchvision>=0.18.1
+transformers>=4.47.0
+
+# ── Segmentation (SAM ViT-H + Grounded-SAM helpers, from the GSA clone) ──────
+segment-anything>=1.0
+
+# ── HTTP: VLM / image-edit / Hunyuan3D servers ───────────────────────────────
+requests>=2.32.5
+
+# ── evaluation/ only ─────────────────────────────────────────────────────────
+openai>=2.37.0
+tqdm>=4.67.3
+# Optional: registers AVIF support with PIL for .avif inputs. Pillow >= 11.3
+# reads AVIF natively, so this is only needed on older Pillow.
+# pillow-avif-plugin>=1.4.0
