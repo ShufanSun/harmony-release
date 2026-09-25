@@ -356,8 +356,7 @@ dataset's `attribution.csv`.
 ```bibtex
 @article{sun2026harmony,
   title   = {HARMONY: Hierarchical Agentic Reasoning for Monocular Image-to-Scene Synthesis},
-  author  = {Sun, Shufan and Wang, Chen and Gu, Jiatao and Liu, Lingjie},
-  journal = {arXiv preprint arXiv:2609.26793},
+  author  = {Sun, Shufan and Wang, Chen and Song, Enxin and Gu, Jiatao and Liu, Lingjie},
   url     = {https://arxiv.org/abs/2609.26793},
   year    = {2026}
 }
