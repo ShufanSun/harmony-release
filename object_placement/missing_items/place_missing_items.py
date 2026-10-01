@@ -131,7 +131,8 @@ def _vlm_call_json(content: list[dict],
         "chat_template_kwargs": {"enable_thinking": False},
     }
     try:
-        resp = requests.post(VLM_API_URL, json=payload, timeout=120)
+        from object_placement.vlm_backend import vlm_post
+        resp = vlm_post(payload, timeout=120, qwen_url=VLM_API_URL)
         resp.raise_for_status()
         raw = resp.json()["choices"][0]["message"]["content"].strip()
         raw = re.sub(r"<think>[\s\S]*?</think>", "", raw, flags=re.IGNORECASE).strip()
@@ -1015,6 +1016,19 @@ def run(output_dir: "str | Path",
         missing = _vlm_detect_missing(ref_photo, before_img, placed_cats)
         print(f"[missing] detected {len(missing)} type(s): "
               f"{[m['type'] for m in missing]}")
+
+    # This placer anchors items on furniture surfaces / the floor near furniture,
+    # i.e. it only knows how to place DECORATION-scale objects.  A missing sofa
+    # or window is still detected and reported above, but placing it here would
+    # put it on a tabletop — leave it to a re-run of its own domain's stage.
+    _report_only = [m for m in missing
+                    if m.get("domain", _TYPE_DOMAIN.get(m["type"], "decoration"))
+                    != "decoration"]
+    for m in _report_only:
+        _dom = m.get("domain", _TYPE_DOMAIN.get(m["type"]))
+        print(f"[missing] '{m['type']}' is a {_dom} object — reported, NOT placed "
+              f"(re-run the {_dom} stage to recover it)")
+    missing = [m for m in missing if m not in _report_only]
 
     if not missing:
         print("[missing] nothing to place. Done.")

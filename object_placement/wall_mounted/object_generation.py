@@ -1,7 +1,7 @@
 """
 object_generation.py — generate 3D models for wall-mounted objects via
-Hunyuan3D (the only 3D-generation backend in this release; the module was
-in this release — Hunyuan3D is now required, not optional).
+Hunyuan3D, the only 3D-generation backend in this release (required, not
+optional).
 
 Reads segment_results.json from a wall_mounted output folder.  For each segment,
 uses its inpainted image (from inpainted/) if available, otherwise the canvas PNG

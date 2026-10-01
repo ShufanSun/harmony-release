@@ -203,7 +203,7 @@ _EDGE_MARGIN   = 0.03
 # Sofa back-offset: how close to the sofa back the pillow centre lands
 _BACK_MARGIN   = 0.05
 # Fraction of sofa depth occupied by the back rest (from the back face inward)
-_BACK_REST_FRAC = 0.12  # low-poly sofas GLBs typically have thin back cushions
+_BACK_REST_FRAC = 0.12  # low-poly sofa GLBs typically have thin back cushions
                         # (~10% of sofa depth).  Was 0.28 which assumed deeper
                         # padded backs and left pillows floating in front of
                         # the actual back cushion.  Probe overrides this when
@@ -2287,7 +2287,7 @@ def _push_to_visible_face_against_back(
                     & (_v_world_y < furn_base[1] + furn_h + 0.05)
                 )
                 _zs = _v_local_z[_back_zone]
-                # Lowered threshold from 200 to 50 — low-poly low-poly sofas
+                # Lowered threshold from 200 to 50 — low-poly sofas
                 # (especially the ones whose probe also fails) tend to have
                 # sparse back-rest geometry, but 50 verts in the back zone
                 # is still enough to find a stable peak via histogram.
@@ -2414,7 +2414,7 @@ def _push_to_visible_face_against_back(
                     # mass is), clamped so it doesn't extend past the
                     # mesh's own back-most vertex + 2 cm safety margin.
                     # NOTE: we deliberately do NOT clamp to the metadata
-                    # depth here — when the generated meshes extends past
+                    # depth here — when the generated mesh extends past
                     # metadata, the visible back-rest IS past metadata,
                     # and clamping pillows to the metadata back wall
                     # would put them at the front of the visible mesh
@@ -2565,7 +2565,7 @@ def _push_to_visible_face_against_back(
     _front_face_z = target_local_z - backrest_sign * _ext_z_proj
     # Back wall: prefer the mesh-derived back-rest back-most Z when
     # available (matches the cx code path which already trusts mesh
-    # over metadata).  When the generated meshes extends past metadata
+    # over metadata).  When the generated mesh extends past metadata
     # (sofa[1]: mesh back at -0.620 vs metadata back at -0.259), the
     # metadata clamp would yank the pillow ~28cm forward of the visible
     # backrest.  Mesh-derived back wall lets the leaning pillow's top

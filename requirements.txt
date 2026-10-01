@@ -50,6 +50,9 @@ requests>=2.32.5
 # ── evaluation/ only ─────────────────────────────────────────────────────────
 openai>=2.37.0
 tqdm>=4.67.3
+torchmetrics  # LPIPS in evaluation/metrics.py
+# pytorch3d — needed by evaluation/chamfer_eval.py only; it has no plain pip
+# wheel, so build it for your torch/CUDA: https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md
 # Optional: registers AVIF support with PIL for .avif inputs. Pillow >= 11.3
 # reads AVIF natively, so this is only needed on older Pillow.
 # pillow-avif-plugin>=1.4.0

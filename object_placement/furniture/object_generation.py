@@ -1,7 +1,7 @@
 """
 object_generation.py — generate 3D models for furniture objects via
-Hunyuan3D (the only 3D-generation backend in this release; the module was
-in this release — Hunyuan3D is now required, not optional).
+Hunyuan3D, the only 3D-generation backend in this release (required, not
+optional).
 
 Reads segment_results.json from a furniture output folder.  For each segment,
 uses its inpainted image (from the inpainted subdir) if available, otherwise
@@ -292,7 +292,8 @@ Respond with ONLY a JSON object, no markdown:
     }
 
     try:
-        resp = requests.post(VLM_API_URL, json=payload, timeout=90)
+        from object_placement.vlm_backend import vlm_post
+        resp = vlm_post(payload, timeout=90, qwen_url=VLM_API_URL)
         resp.raise_for_status()
         raw = resp.json()["choices"][0]["message"]["content"]
         raw = re.sub(r"<think>[\s\S]*?</think>", "", raw, flags=re.IGNORECASE).strip()

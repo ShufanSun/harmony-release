@@ -1026,7 +1026,7 @@ def _rotation_for_affinity(
     """Return a Y-axis rotation so the object's front faces the correct world direction.
 
     local_front:  unit vector in mesh-local space indicating where the front is
-                  (from VLM detection).  Defaults to [0, 0, -1] (the 3D generator convention).
+                  (from VLM detection).  Defaults to [0, 0, -1] (the generator's convention).
 
     Room coordinate system:
       X: 0=left wall → room_w=right wall
@@ -1359,7 +1359,7 @@ Respond with ONLY a JSON object:
         "D": np.array([ 1, 0, 0], dtype=np.float64),
     }
 
-    default_front = np.array([0, 0, -1], dtype=np.float64)  # the 3D generator convention
+    default_front = np.array([0, 0, -1], dtype=np.float64)  # the generator's convention
 
     # Check if any variant of this path exists in cache (absolute vs relative).
     # GLB paths may be resolved to absolute during placement but stored as
@@ -1939,7 +1939,7 @@ def compute_floor_placement(
             print(f"  [place] floor intersection failed for idx={entry['index']} — skipping")
             return None
 
-    # Load GLB.  For canonical (pre-de-tilted) GLBs the the 3D generator ground slab has
+    # Load GLB.  For canonical (pre-de-tilted) GLBs the generator's ground slab has
     # already been removed by detilt_and_orient.py — skip the slab pass to
     # avoid double-processing.
     is_canonical = bool(entry.get("is_canonical_glb"))
@@ -6571,7 +6571,7 @@ Respond with ONLY a JSON object, no markdown:
 def _remove_ground_faces(mesh: "trimesh.Trimesh") -> "trimesh.Trimesh":
     """Remove the flat ground slab that the 3D generator bakes into furniture GLBs.
 
-    the 3D generator reconstructs geometry from a single image and adds a horizontal ground
+    The generator reconstructs geometry from a single image and adds a horizontal ground
     patch at the base of the object.  We use two complementary detectors:
 
     1. **Histogram-gap cut** — build a vertical (Y) histogram of face centres;

@@ -329,7 +329,8 @@ def estimate_size_and_wall(
     }
 
     try:
-        resp = requests.post(VLM_API_URL, json=payload, timeout=60)
+        from object_placement.vlm_backend import vlm_post
+        resp = vlm_post(payload, timeout=60, qwen_url=VLM_API_URL)
         resp.raise_for_status()
         raw = resp.json()["choices"][0]["message"]["content"]
         result = _parse_json_response(raw)

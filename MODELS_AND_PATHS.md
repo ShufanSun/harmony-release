@@ -6,10 +6,11 @@ per-user secrets. Each has a placeholder marking exactly where it goes.
 
 | What | Where | Required? | Notes |
 |---|---|---|---|
-| VGGT | `vggt/` (directly under the repo root — hardcoded path) | **Required** | See `vggt/PLACE_MODEL_HERE.md`. Weights auto-download from HF on first run. |
-| Grounded-Segment-Anything | `Grounded-Segment-Anything/` (directly under the repo root — hardcoded path) | **Required** | See `Grounded-Segment-Anything/PLACE_MODEL_HERE.md`. Still used for the SAM ViT-H / GroundingDINO weights under `weights/` that `wall_mounted/rectify_windows.py`, `wall_mounted/generate_window_plane.py`, `wall_mounted/segment_wall_objects.py` (whose helpers the ceiling stage imports) and `missing_items/place_missing_items.py` load directly, even though wall/furniture/decoration segmentation itself moved to LocateAnything→SAM2. |
-| Hunyuan3D-2 | `Hunyuan3D-2/` | **Required** | See `Hunyuan3D-2/PLACE_MODEL_HERE.md`. The only 3D-generation backend, so its server must be running for the furniture/decoration/wall-mounted/ceiling object-generation stages. Those stages can be skipped with `--skip` while iterating. |
-| Qwen3-VL-30B-A3B-Instruct-FP8 | *(not a repo path — HF model id)* | **Required** | Served via `vllm serve Qwen/Qwen3-VL-30B-A3B-Instruct-FP8 ...` (see README `## Backends`) — vLLM pulls it from Hugging Face itself, nothing to copy in-tree. Or skip local vLLM entirely and set `SCENEWEAVE_VLM_BACKEND=gpt` in `.env` to use a hosted VLM API instead. |
+| VGGT | `vggt/` (directly under the repo root — hardcoded path) | **Required** | `git clone https://github.com/facebookresearch/vggt.git vggt` (see `vggt/PLACE_MODEL_HERE.md`). Weights (`facebook/VGGT-1B`) auto-download from Hugging Face on first run. |
+| Grounded-Segment-Anything | `Grounded-Segment-Anything/` (directly under the repo root — hardcoded path) | **Required** | `git clone --recurse-submodules https://github.com/IDEA-Research/Grounded-Segment-Anything.git`, then put its two default checkpoints in `Grounded-Segment-Anything/weights/`: `wget https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth` and `wget https://github.com/IDEA-Research/GroundingDINO/releases/download/v0.1.0-alpha/groundingdino_swint_ogc.pth`. Still used for the SAM ViT-H / GroundingDINO weights under `weights/` that `wall_mounted/rectify_windows.py`, `wall_mounted/generate_window_plane.py`, `wall_mounted/segment_wall_objects.py` (whose helpers the ceiling stage imports) and `missing_items/place_missing_items.py` load directly, even though wall/furniture/decoration segmentation itself moved to LocateAnything→SAM2. |
+| Hunyuan3D-2 | `Hunyuan3D-2/` | **Required** | `git clone https://github.com/Tencent-Hunyuan/Hunyuan3D-2.git Hunyuan3D-2`, then follow its README for the `hunyuan3d` env (`api_server.py` defaults auto-download from Hugging Face: shape `tencent/Hunyuan3D-2mini`, texture `tencent/Hunyuan3D-2`). See `Hunyuan3D-2/PLACE_MODEL_HERE.md`. The only 3D-generation backend, so its server must be running for the furniture/decoration/wall-mounted/ceiling object-generation stages. Those stages can be skipped with `--skip` while iterating. |
+| Qwen3-VL-30B-A3B-Instruct-FP8 (the VLM, port 8080) | *(not a repo path — HF model id)* | **Required** | Served via `vllm serve Qwen/Qwen3-VL-30B-A3B-Instruct-FP8 ...` (see README `## Backends`) — vLLM pulls it from Hugging Face itself, nothing to copy in-tree. Or skip local vLLM entirely and set `SCENEWEAVE_VLM_BACKEND=gpt` in `.env` to use a hosted VLM API instead. |
+| Qwen-Image-Edit (image editing/inpainting, port 8000) | *(not a repo path — HF model id `Qwen/Qwen-Image-Edit`)* | **Required** (or Gemini) | Loaded by `Qwen/img_server.py` through diffusers' `QwenImageEditPipeline`, which pulls it from Hugging Face on the server's first start (<https://huggingface.co/Qwen/Qwen-Image-Edit>). Not the same model as the Qwen3-VL VLM above. Or set `SCENEWEAVE_IMG_EDIT=gemini` with `GEMINI_API_KEY`. |
 | Input photos | `data/indoor_images/` | **Required** | See `data/PLACE_DATA_HERE.md`. |
 | API keys (Gemini / NVIDIA-hosted VLM / OpenAI eval) | `.env` (copy from `.env.example`) | Only if using hosted backends | `cp .env.example .env` then fill in. `.env` is gitignored. |
 | VLM + image-edit servers env | conda env `vllm-env` | **Required** (for local backends) | Spec at `environment_yml/vllm-env.yml`. |
@@ -18,7 +19,10 @@ per-user secrets. Each has a placeholder marking exactly where it goes.
 | SAM2 segmentation env | conda env `lang-sam` | **Required** | No exported spec yet. Conflicts with `eagle-embodied`'s transformers version, hence the separate env. |
 | Hunyuan3D server env | conda env `hunyuan3d` | **Required** | No exported spec yet — comes from Hunyuan3D-2's own setup instructions. |
 | SAM ViT-H checkpoint (carpet segmentation fallback) | `checkpoints/sam_vit_h_4b8939.pth` at repo root, or `SCENEWEAVE_SAM_CKPT` env var | Optional | Only reached when the pre-existing carpet mask is missing in `place_furniture_vggt.py`; silently skipped if absent. |
-| LocateAnything + SAM2 helper dirs | `SCENEWEAVE_LA_DIR` (dir of `la_emit_boxes.py`), `SCENEWEAVE_SAM2_DIR` (dir of `sam2_from_boxes.py`) | **Required** | Defaults are `/path/to/...` placeholders in `object_placement/segmentation_la_sam2.py` — set both env vars. |
+| LocateAnything + SAM2 workers | `object_placement/la_sam2_workers/` (in-tree; `SCENEWEAVE_LA_DIR` / `SCENEWEAVE_SAM2_DIR` override) | **Required** | See `object_placement/la_sam2_workers/README.md` for where each model comes from. |
+| LocateAnything-3B | *(not a repo path — HF model id `nvidia/LocateAnything-3B`)* | **Required** | The object detector for wall, furniture and decoration segmentation. Auto-downloads from Hugging Face on first run, or `hf download nvidia/LocateAnything-3B` and set `SCENEWEAVE_LA_MODEL=<dir>`. Can be replaced via `la_emit_boxes.py` (see its header). |
+| NVlabs/Eagle `Embodied/` (`locateanything_worker.py`) | `SCENEWEAVE_EAGLE_EMBODIED_DIR` env var | **Required** | Clone <https://github.com/NVlabs/Eagle>; its `Embodied/` setup also defines the `eagle-embodied` env. |
+| SAM 2.1 (`sam2.1_hiera_small`) | *(not a repo path — torch hub cache)* | **Required** | Masks only: turns LocateAnything's boxes into pixel masks and does no detection. Can be replaced by any box-prompted segmenter. Auto-downloaded by `lang_sam` from Meta's `dl.fbaipublicfiles.com`. Install `lang_sam` from <https://github.com/luca-medeiros/lang-segment-anything> into the `lang-sam` env. |
 | Evaluation inputs (baselines + input photos) | `REF_DIR`, `REGEN_DIR`, `GEN3DSR_DIR`, `HARMONY_ROOTS` env vars (+ `OPENAI_API_KEY`) | Optional | Only for `evaluation/evaluation.sh`; see `evaluation/README.md`. |
 | Blender (Cycles lighting render) | `BLENDER_BIN` env var; otherwise `_find_blender()` in `lighting_module/render_blender.py` globs `~/blender/blender-*/blender`, `/opt/blender*/blender`, `/usr/local/blender*/blender`, then falls back to `blender` on `PATH` | Optional | Only needed for the physically-lit `lighting` stage's Cycles render; the pipeline degrades gracefully without it. |
 
@@ -75,12 +79,6 @@ Dead code that had been carried over and has since been deleted from this copy
 
 ## Known gaps
 
-- **The two segmentation worker scripts are not in this repo.**
-  `object_placement/segmentation_la_sam2.py` shells out to `la_emit_boxes.py`
-  (in `SCENEWEAVE_LA_DIR`) and `sam2_from_boxes.py` (in `SCENEWEAVE_SAM2_DIR`).
-  Until both are supplied, the `segment_wall_objects`, `segment_furniture` and
-  `segment_decorations` stages cannot run, and neither can anything downstream
-  of them.
 - Only `vllm-env` has an exported conda spec. `requirements.txt` covers the pip
   side of `scenegen`; `eagle-embodied`, `lang-sam` and `hunyuan3d` have none.
 - There are no tests.

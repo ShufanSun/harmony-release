@@ -25,7 +25,7 @@ Our adaptation:
     which assumes pred is already in GT camera frame — none of our methods are)
 
 Usage:
-    CUDA_VISIBLE_DEVICES=3 PYTHONNOUSERSITE=1 python chamfer_eval_paper.py \\
+    PYTHONNOUSERSITE=1 python evaluation/chamfer_eval.py \\
         --gt-root /path/to/front3d_gt/sceneobjgt \\
         --out results_harmony300_chamfer_paper.json
 """

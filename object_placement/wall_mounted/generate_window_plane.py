@@ -2,15 +2,15 @@
 generate_window_plane.py — create a flat plane GLB for each window/door segment,
                             textured with the (rectified) inpainted image.
 
-Replaces the 3D generator for windows.  the 3D generator reconstructs a thick 3D mesh which adds
+Replaces 3D generation for windows.  The generator reconstructs a thick 3D mesh which adds
 unwanted depth and distorts the frame placement.  A thin flat plane is better:
   • Zero depth — lies perfectly flush against the wall.
   • UV-mapped — the full rectified window image is projected onto the face.
   • Aspect ratio preserved — plane dimensions match the inpainted image ratio.
 
-The plane is created in the 3D generator convention:
+The plane is created in the generator's convention:
   • Centred at origin, lying in the XY plane.
-  • Depth axis = Z (the 3D generator convention: front face at min-Z = Z=0 side).
+  • Depth axis = Z (the generator's convention: front face at min-Z = Z=0 side).
   • Thin depth: 2% of the larger dimension (just enough for OBB to detect depth axis).
 
 Usage:
@@ -572,7 +572,7 @@ def run(output_dir: str | Path,
         # Rectify every plane type — windows/doors are often captured at a
         # slight tilt, and art/painting/frame need the same fronto-parallel
         # correction.  Mirrors do NOT go through this code path — they use
-        # the the 3D generator 3D reconstruction in object_generation.py.
+        # the generated 3D reconstruction in object_generation.py.
         glb_bytes = make_window_plane(img, device=device, rectify=True)
         glb_path.write_bytes(glb_bytes)
         seg["glb_file"] = glb_name

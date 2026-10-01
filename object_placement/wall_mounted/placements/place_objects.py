@@ -6,8 +6,8 @@ Pipeline per object:
   1. Back-project the bounding-box centre pixel through the architectural camera
      to find which wall the object sits on and its world-space position.
   2. Ask the VLM to estimate the real-world width × height × depth.
-  3. Load the generated GLBs, scale it to the estimated dimensions (p5/p95 robust
-     scaling to handle stray generated reconstructions vertices), orient it to face
+  3. Load the generated GLB, scale it to the estimated dimensions (p5/p95 robust
+     scaling to handle stray reconstruction vertices), orient it to face
      the room interior, translate it to the wall position.
   4. Append the placed geometry to the scene mesh (walls_with_windows.obj →
      walls_with_objects.obj) and do a two-pass render.
@@ -971,7 +971,7 @@ Reply with JSON only — no explanation:
 {{"correct_panel": "A|B|C|D"}}"""
 
 # Panel letter → (flip_y, flip_z)
-# flip_y: True = flip Y axis (corrects the 3D generator image-Y-down convention)
+# flip_y: True = flip Y axis (corrects the generator's image-Y-down convention)
 # flip_z: True = flip Z axis (brings near/visible face to the room-facing side)
 _ORIENT_PANELS = {
     "A": (False, False),
@@ -1001,7 +1001,7 @@ def _render_glb_one_panel(
       A (flip_y=F, flip_z=F): shows raw back face, upside-down
       B (flip_y=T, flip_z=F): shows raw back face, right-side-up
       C (flip_y=F, flip_z=T): shows raw front face, upside-down
-      D (flip_y=T, flip_z=T): shows raw front face, right-side-up  ← correct for the 3D generator
+      D (flip_y=T, flip_z=T): shows raw front face, right-side-up  ← correct for generated meshes
     """
     v = verts_raw.copy()
     if flip_y:
@@ -1305,7 +1305,7 @@ def _render_glb_8views(
 
     bb_center = ((mesh.bounds[0] + mesh.bounds[1]) / 2).astype(np.float64)
     verts0 = mesh.vertices.astype(np.float64) - bb_center
-    verts0[:, 1] = -verts0[:, 1]   # the 3D generator Y-flip
+    verts0[:, 1] = -verts0[:, 1]   # generator Y-flip
 
     p05 = np.percentile(verts0, 5, axis=0)
     p95 = np.percentile(verts0, 95, axis=0)
@@ -1871,7 +1871,7 @@ def _transform_glb_to_wall(
     size:     dict,         # width_m, height_m, depth_m
     room:     dict,
     cam_pos:       np.ndarray | None = None,  # for bbox-align fallback
-    flip_y:        bool = True,  # flip Y axis (the 3D generator image-Y convention)
+    flip_y:        bool = True,  # flip Y axis (the generator's image-Y convention)
     flip_x:        bool = False, # flip X axis (left-right mirror)
     flip_z:        bool = False, # flip Z axis (front/back face swap)
     glb_front_deg:    int | None = None,  # VLM-determined Y-rotation; None = VLM didn't answer
@@ -1922,7 +1922,7 @@ def _transform_glb_to_wall(
     bb_z   = float(mesh.bounds[1][2] - mesh.bounds[0][2])   # depth axis in GLB
 
     # Orientation corrections for generated GLBs convention:
-    #   flip_y: the 3D generator image Y increases downward → world Y should increase upward
+    #   flip_y: the generator's image Y increases downward → world Y should increase upward
     #   flip_x: left-right mirror correction if VLM detected the texture is mirrored
     #   flip_z: front/back face swap — applied when VLM determined the -Z face is the
     #           decorative/functional side (e.g., painting canvas, lamp front)
@@ -2666,7 +2666,7 @@ def run(
                         wall, world_pt = vlm_wall, new_hit
 
         # ── Flip corrections (upside-down / left-right mirror / front-back) ───
-        # the 3D generator convention:
+        # the generator's convention:
         #   flip_y=True  — image Y increases downward; must flip for world-up.
         #   flip_z=True  — the near/visible face is at min Z; the snap in
         #                  _transform_glb_to_wall puts min-Z on the wall, so we
@@ -2750,7 +2750,7 @@ def run(
                     orient["flip_x"] = vlm_orient.get("flip_x", False)
                     if not _is_flat and front_face_flip_z is None:
                         orient["flip_z"] = vlm_orient["flip_z"]
-                    # For flat objects: keep default flip_z=True (the 3D generator convention)
+                    # For flat objects: keep default flip_z=True (the generator's convention)
                 elif idx in _existing_placements:
                     # VLM offline — restore previously VLM-corrected orientation
                     prev_orient = _existing_placements[idx].get("orientation")
@@ -2975,7 +2975,7 @@ def run(
                     # texture, since UVs are unchanged).  Mirroring the GLB
                     # itself avoids relying on the orient[flip_x] code path
                     # downstream, mirroring the painting permanently in the
-                    # GLB the way decorations' mirror_check fixes the the 3D generator
+                    # GLB the way decorations' mirror_check fixes the generator's
                     # left-right flip on a computer monitor.
                     _glb_full = (Path(out_dir) / "wall_mounted" / "objects"
                                  / _glb_name)
@@ -5084,7 +5084,7 @@ def run_corner_based(
               f"h={object_h:.2f}m  cy={center_y:.2f}m")
 
         # ── Step 5: Orientation ───────────────────────────────────────────────
-        # the 3D generator convention:
+        # the generator's convention:
         #   flip_y=True  — image Y increases downward; must flip for world-up.
         #   flip_z=True  — the near/visible face is at min Z; the snap in
         #                  _transform_glb_to_wall puts min-Z on the wall, so we
@@ -5717,7 +5717,7 @@ def run_corner_based(
                     # texture, since UVs are unchanged).  Mirroring the GLB
                     # itself avoids relying on the orient[flip_x] code path
                     # downstream, mirroring the painting permanently in the
-                    # GLB the way decorations' mirror_check fixes the the 3D generator
+                    # GLB the way decorations' mirror_check fixes the generator's
                     # left-right flip on a computer monitor.
                     _glb_full = (Path(out_dir) / "wall_mounted" / "objects"
                                  / _glb_name)

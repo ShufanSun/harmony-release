@@ -13,9 +13,14 @@ furniture}/, so the inpaint / object-gen / placement stages run unchanged.
 Env overrides:
     SCENEWEAVE_LA_ENV     conda env with LocateAnything   (default eagle-embodied)
     SCENEWEAVE_SAM2_ENV   conda env with SAM2 / lang-sam  (default lang-sam)
-    SCENEWEAVE_LA_DIR     dir of la_emit_boxes.py     (default /path/to/eagle/Embodied)
-    SCENEWEAVE_SAM2_DIR   dir of sam2_from_boxes.py   (default /path/to/lang-segment-anything)
+    SCENEWEAVE_LA_DIR     dir of la_emit_boxes.py     (default object_placement/la_sam2_workers)
+    SCENEWEAVE_SAM2_DIR   dir of sam2_from_boxes.py   (default object_placement/la_sam2_workers)
     SCENEWEAVE_SAM2_TYPE  sam2 checkpoint             (default sam2.1_hiera_small)
+    SCENEWEAVE_LA_MODEL   LocateAnything HF id or local dir (default nvidia/LocateAnything-3B)
+    SCENEWEAVE_EAGLE_EMBODIED_DIR  NVlabs/Eagle's Embodied/ dir, for
+                          locateanything_worker.py    (required)
+
+See object_placement/la_sam2_workers/README.md for where each model comes from.
 """
 from __future__ import annotations
 
@@ -26,9 +31,13 @@ from pathlib import Path
 _CONDA_ROOT = os.environ.get("CONDA_ROOT", str(Path.home() / "miniconda3"))
 _LA_ENV = os.environ.get("SCENEWEAVE_LA_ENV", "eagle-embodied")
 _SAM2_ENV = os.environ.get("SCENEWEAVE_SAM2_ENV", "lang-sam")
-_LA_DIR = os.environ.get("SCENEWEAVE_LA_DIR", "/path/to/eagle/Embodied")
-_SAM2_DIR = os.environ.get("SCENEWEAVE_SAM2_DIR", "/path/to/lang-segment-anything")
+_WORKERS_DIR = str(Path(__file__).resolve().parent / "la_sam2_workers")
+_LA_DIR = os.environ.get("SCENEWEAVE_LA_DIR", _WORKERS_DIR)
+_SAM2_DIR = os.environ.get("SCENEWEAVE_SAM2_DIR", _WORKERS_DIR)
 _SAM2_TYPE = os.environ.get("SCENEWEAVE_SAM2_TYPE", "sam2.1_hiera_small")
+# LocateAnything weights: HF id or local dir (empty → la_emit_boxes.py default,
+# nvidia/LocateAnything-3B).
+_LA_MODEL = os.environ.get("SCENEWEAVE_LA_MODEL", "")
 
 
 def _env_python(env: str) -> str:
@@ -76,6 +85,8 @@ def run(output_dir: str | Path, image_path: str | Path, domain: str,
             raise FileNotFoundError(f"decoration_analysis.json missing: {analysis} "
                                     "(run detect_missing_decorations first)")
         cmd1 += ["--analysis", str(analysis)]
+    if _LA_MODEL:
+        cmd1 += ["--model", _LA_MODEL]
     if no_verify or os.environ.get("SCENEWEAVE_NO_SEGMENT_VERIFY") == "1":
         cmd1.append("--no-verify")
     _run(cmd1, cwd=_LA_DIR)
